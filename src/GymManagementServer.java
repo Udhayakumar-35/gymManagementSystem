@@ -38,23 +38,78 @@ public class GymManagementServer {
     private static final int ITERATIONS = 210_000;
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(15)).build();
 
+    private static String dbUrl;
+    private static String dbUsername;
+    private static String dbPassword;
+
     public static void main(String[] args) throws Exception {
         Path config = Path.of("config", "app.properties");
-        if (!Files.exists(config)) throw new IllegalStateException("Missing config/app.properties. Copy config.example.properties and set your database credentials.");
-        try (var input = Files.newInputStream(config)) { CONFIG.load(input); }
+        if (Files.exists(config)) {
+            try (var input = Files.newInputStream(config)) { CONFIG.load(input); }
+        }
+        loadDatabaseConfig();
         try { Class.forName("org.postgresql.Driver"); } catch (ClassNotFoundException ignored) {}
         ensureSchema();
-        int port = Integer.parseInt(CONFIG.getProperty("server.port", "8080"));
-        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+        String envPort = System.getenv("PORT");
+        int port = (envPort != null && !envPort.isBlank())
+                ? Integer.parseInt(envPort.trim())
+                : Integer.parseInt(CONFIG.getProperty("server.port", "8080"));
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
         server.createContext("/api/", GymManagementServer::api);
         server.createContext("/", GymManagementServer::staticFile);
         server.setExecutor(Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors())));
         server.start();
-        System.out.println("Gym Management System is running at http://localhost:" + port);
+        System.out.println("Gym Management System is running on port " + port + " (http://localhost:" + port + ")");
+    }
+
+    private static void loadDatabaseConfig() {
+        String rawDatabaseUrl = System.getenv("DATABASE_URL");
+        String envDbUrl = System.getenv("DB_URL");
+        if (rawDatabaseUrl != null && !rawDatabaseUrl.isBlank()) {
+            String trimmed = rawDatabaseUrl.trim();
+            if (trimmed.startsWith("jdbc:")) {
+                dbUrl = trimmed;
+                dbUsername = envOrConfig("DB_USERNAME", "db.username");
+                dbPassword = envOrConfig("DB_PASSWORD", "db.password");
+            } else {
+                // Parse Render/Railway style postgresql://user:pass@host[:port]/dbname[?query]
+                URI uri = URI.create(trimmed);
+                String userInfo = uri.getUserInfo();
+                if (userInfo != null && userInfo.contains(":")) {
+                    String[] creds = userInfo.split(":", 2);
+                    dbUsername = URLDecoder.decode(creds[0], StandardCharsets.UTF_8);
+                    dbPassword = URLDecoder.decode(creds[1], StandardCharsets.UTF_8);
+                } else {
+                    dbUsername = envOrConfig("DB_USERNAME", "db.username");
+                    dbPassword = envOrConfig("DB_PASSWORD", "db.password");
+                }
+                int pgPort = uri.getPort() > 0 ? uri.getPort() : 5432;
+                String dbPath = uri.getPath() != null ? uri.getPath() : "/gym_management";
+                String query = (uri.getRawQuery() != null && !uri.getRawQuery().isBlank()) ? "?" + uri.getRawQuery() : "";
+                dbUrl = "jdbc:postgresql://" + uri.getHost() + ":" + pgPort + dbPath + query;
+            }
+        } else if (envDbUrl != null && !envDbUrl.isBlank()) {
+            dbUrl = envDbUrl.trim();
+            dbUsername = envOrConfig("DB_USERNAME", "db.username");
+            dbPassword = envOrConfig("DB_PASSWORD", "db.password");
+        } else {
+            dbUrl = CONFIG.getProperty("db.url", "").trim();
+            dbUsername = CONFIG.getProperty("db.username", "").trim();
+            dbPassword = CONFIG.getProperty("db.password", "").trim();
+        }
+        if (dbUrl == null || dbUrl.isBlank()) {
+            throw new IllegalStateException("Missing database configuration. Set DATABASE_URL (or DB_URL/DB_USERNAME/DB_PASSWORD) or provide config/app.properties.");
+        }
+    }
+
+    private static String envOrConfig(String envKey, String configKey) {
+        String v = System.getenv(envKey);
+        if (v != null && !v.isBlank()) return v.trim();
+        return CONFIG.getProperty(configKey, "").trim();
     }
 
     static Connection db() throws SQLException {
-        return DriverManager.getConnection(CONFIG.getProperty("db.url"), CONFIG.getProperty("db.username"), CONFIG.getProperty("db.password"));
+        return DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
     }
 
     private static void api(HttpExchange x) throws IOException {
@@ -64,6 +119,7 @@ public class GymManagementServer {
             String path = x.getRequestURI().getPath().substring("/api".length());
             String method = x.getRequestMethod();
             Map<String, String> q = params(x);
+            if (path.equals("/health") && method.equals("GET")) { json(x, 200, Map.of("status", "ok")); return; }
             if (path.equals("/setup/status") && method.equals("GET")) { setupStatus(x); return; }
             if (path.equals("/setup") && method.equals("POST")) { setup(x, q); return; }
             if (path.equals("/signup") && method.equals("POST")) { signup(x, q); return; }
@@ -495,9 +551,30 @@ public class GymManagementServer {
         else badMethod(x);
     }
 
-    /** Ensure all required Member Portal, Upgrade Request, Notification, and Razorpay tables/columns exist in PostgreSQL. */
+    /** Ensure the complete PostgreSQL schema (Admin + Member Portals + starter plans) exists on startup. */
     private static void ensureSchema() throws SQLException {
         try (Connection c = db(); Statement s = c.createStatement()) {
+            s.execute("CREATE TABLE IF NOT EXISTS admin ("
+                    + "admin_id BIGSERIAL PRIMARY KEY, "
+                    + "username VARCHAR(50) NOT NULL UNIQUE, "
+                    + "password_hash VARCHAR(255) NOT NULL, "
+                    + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            s.execute("CREATE TABLE IF NOT EXISTS members ("
+                    + "member_id BIGSERIAL PRIMARY KEY, "
+                    + "full_name VARCHAR(120) NOT NULL, "
+                    + "age SMALLINT NOT NULL CHECK (age >= 10 AND age <= 100), "
+                    + "gender VARCHAR(20) NOT NULL, "
+                    + "phone VARCHAR(25) NOT NULL UNIQUE, "
+                    + "email VARCHAR(254) NULL UNIQUE, "
+                    + "address VARCHAR(500) NOT NULL, "
+                    + "joining_date DATE NOT NULL, "
+                    + "emergency_contact VARCHAR(25) NOT NULL, "
+                    + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                    + "updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            s.execute("CREATE OR REPLACE FUNCTION update_members_timestamp() RETURNS TRIGGER AS $$ "
+                    + "BEGIN NEW.updated_at = CURRENT_TIMESTAMP; RETURN NEW; END; $$ LANGUAGE plpgsql");
+            s.execute("DROP TRIGGER IF EXISTS trg_members_updated_at ON members");
+            s.execute("CREATE TRIGGER trg_members_updated_at BEFORE UPDATE ON members FOR EACH ROW EXECUTE FUNCTION update_members_timestamp()");
             s.execute("CREATE TABLE IF NOT EXISTS member_accounts ("
                     + "account_id BIGSERIAL PRIMARY KEY, "
                     + "member_id BIGINT NOT NULL UNIQUE REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE CASCADE, "
@@ -506,10 +583,41 @@ public class GymManagementServer {
                     + "role VARCHAR(20) NOT NULL DEFAULT 'MEMBER' CHECK (role = 'MEMBER'), "
                     + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                     + "updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            s.execute("CREATE TABLE IF NOT EXISTS membership_plans ("
+                    + "plan_id BIGSERIAL PRIMARY KEY, "
+                    + "plan_name VARCHAR(80) NOT NULL UNIQUE, "
+                    + "duration_months SMALLINT NOT NULL CHECK (duration_months IN (1,3,6,12)), "
+                    + "price NUMERIC(10,2) NOT NULL CHECK (price >= 0), "
+                    + "description VARCHAR(500) NULL, "
+                    + "membership_type VARCHAR(40) NOT NULL DEFAULT 'Standard', "
+                    + "benefits TEXT NULL, "
+                    + "active BOOLEAN NOT NULL DEFAULT TRUE, "
+                    + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
             s.execute("ALTER TABLE membership_plans ADD COLUMN IF NOT EXISTS membership_type VARCHAR(40) NOT NULL DEFAULT 'Standard'");
             s.execute("ALTER TABLE membership_plans ADD COLUMN IF NOT EXISTS benefits TEXT NULL");
+            s.execute("CREATE TABLE IF NOT EXISTS member_memberships ("
+                    + "membership_id BIGSERIAL PRIMARY KEY, "
+                    + "member_id BIGINT NOT NULL REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT, "
+                    + "plan_id BIGINT NOT NULL REFERENCES membership_plans(plan_id) ON UPDATE CASCADE ON DELETE RESTRICT, "
+                    + "start_date DATE NOT NULL, "
+                    + "end_date DATE NOT NULL CHECK (end_date >= start_date), "
+                    + "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','EXPIRED','CANCELLED','UPCOMING')), "
+                    + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+            s.execute("CREATE INDEX IF NOT EXISTS idx_mm_member ON member_memberships(member_id)");
+            s.execute("CREATE INDEX IF NOT EXISTS idx_mm_dates ON member_memberships(start_date, end_date)");
+            s.execute("CREATE TABLE IF NOT EXISTS payments ("
+                    + "payment_id BIGSERIAL PRIMARY KEY, "
+                    + "member_id BIGINT NOT NULL REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT, "
+                    + "membership_id BIGINT NULL REFERENCES member_memberships(membership_id) ON UPDATE CASCADE ON DELETE SET NULL, "
+                    + "amount NUMERIC(10,2) NOT NULL CHECK (amount >= 0), "
+                    + "payment_method VARCHAR(20) NOT NULL CHECK (payment_method IN ('CASH','UPI','CARD','RAZORPAY')), "
+                    + "payment_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                    + "status VARCHAR(20) NOT NULL DEFAULT 'PAID' CHECK (status IN ('PAID','PENDING','FAILED','REFUNDED')), "
+                    + "notes VARCHAR(500) NULL)");
             s.execute("ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_status_check");
             s.execute("ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('PAID','PENDING','FAILED','REFUNDED'))");
+            s.execute("CREATE INDEX IF NOT EXISTS idx_payments_member_date ON payments(member_id, payment_date)");
+            s.execute("CREATE INDEX IF NOT EXISTS idx_payments_date_status ON payments(payment_date, status)");
             s.execute("CREATE TABLE IF NOT EXISTS membership_upgrade_requests ("
                     + "request_id BIGSERIAL PRIMARY KEY, "
                     + "member_id BIGINT NOT NULL REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE CASCADE, "
@@ -537,6 +645,13 @@ public class GymManagementServer {
             s.execute("ALTER TABLE razorpay_transactions ADD COLUMN IF NOT EXISTS purpose VARCHAR(30) NOT NULL DEFAULT 'PAYMENT'");
             s.execute("ALTER TABLE razorpay_transactions ADD COLUMN IF NOT EXISTS upgrade_request_id BIGINT NULL REFERENCES membership_upgrade_requests(request_id) ON UPDATE CASCADE ON DELETE SET NULL");
             s.execute("ALTER TABLE razorpay_transactions ADD COLUMN IF NOT EXISTS failure_reason VARCHAR(500) NULL");
+            s.execute("CREATE TABLE IF NOT EXISTS attendance ("
+                    + "attendance_id BIGSERIAL PRIMARY KEY, "
+                    + "member_id BIGINT NOT NULL REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT, "
+                    + "check_in_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                    + "attendance_date DATE GENERATED ALWAYS AS (CAST(check_in_at AS DATE)) STORED, "
+                    + "CONSTRAINT uq_attendance_member_day UNIQUE (member_id, attendance_date))");
+            s.execute("CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(attendance_date)");
             s.execute("CREATE TABLE IF NOT EXISTS notifications ("
                     + "notification_id BIGSERIAL PRIMARY KEY, "
                     + "member_id BIGINT NOT NULL REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE CASCADE, "
@@ -548,6 +663,12 @@ public class GymManagementServer {
                     + "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
             s.execute("CREATE INDEX IF NOT EXISTS idx_notifications_member ON notifications(member_id, is_read, created_at DESC)");
             s.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_notifications_dedupe ON notifications(member_id, dedupe_key) WHERE dedupe_key IS NOT NULL");
+            s.execute("INSERT INTO membership_plans(plan_name, duration_months, price, description, membership_type, benefits) VALUES "
+                    + "('Monthly', 1, 1500.00, 'One month of full gym floor access', 'Basic', 'Full cardio & strength floor access, Locker room & showers, Free fitness orientation'), "
+                    + "('Quarterly', 3, 4000.00, 'Three months of gym access with group sessions', 'Standard', 'Full gym & cardio access, Group HIIT & mobility classes, Monthly body composition check, Locker & shower access'), "
+                    + "('Half-Yearly', 6, 7500.00, 'Six months of gym access plus personal guidance', 'Premium', 'Unlimited gym & group classes, 2 personal training check-ins/month, Custom nutrition guide, Priority equipment booking'), "
+                    + "('Yearly', 12, 14000.00, 'Twelve months of all-access VIP club membership', 'Elite', '24/7 VIP gym & studio access, Dedicated personal coach sessions, Sauna & recovery zone, Free guest passes (4/year), Priority renewal rate') "
+                    + "ON CONFLICT (plan_name) DO NOTHING");
         }
     }
 

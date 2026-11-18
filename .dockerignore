@@ -1,0 +1,7 @@
+.git
+.vscode
+build
+config/app.properties
+*.bat
+*.log
+lib/mysql-connector-j.jar
