@@ -90,51 +90,6 @@ PostgreSQL database `gym_management` consists of 10 relational tables defined in
 
 ---
 
-## Getting Started (Local Setup on Windows)
-
-### Prerequisites
-- **Java JDK 21** (e.g., Eclipse Adoptium Temurin 21)
-- **PostgreSQL 14+ / 18+**
-- **PostgreSQL JDBC Driver** placed at `lib/postgresql-42.7.4.jar`
-
-### 1. Provision PostgreSQL Database
-Create the `gymmanager` role and `gym_management` database in PostgreSQL (via `psql` or pgAdmin), then initialize the schema:
-
-```powershell
-.\setup-database.bat
-```
-*(Or execute `database.sql` directly in pgAdmin / `psql`.)*
-
-### 2. Configure Database & Server Settings
-Copy `config.example.properties` to `config/app.properties` (excluded from Git):
-
-```properties
-db.url=jdbc:postgresql://localhost:5432/gym_management
-db.username=gymmanager
-db.password=gymmanager
-server.port=8080
-```
-
-### 3. Configure Razorpay Test Mode Keys *(Optional)*
-Only **Razorpay Test Mode** keys (`rzp_test_...`) are permitted. Set them as environment variables before launching the server (never place secrets in frontend JavaScript):
-
-```powershell
-$env:RAZORPAY_KEY_ID = "rzp_test_your_test_key_id"
-$env:RAZORPAY_KEY_SECRET = "your_test_key_secret"
-```
-*(All non-gateway features—members, plans, subscriptions, attendance, Cash/UPI/Card payments, reports, and notifications—work without Razorpay keys configured.)*
-
-### 4. Compile & Run
-From PowerShell or the VS Code integrated terminal:
-
-```powershell
-.\run.bat
-```
-Then open **http://localhost:8080** in your browser.
-- **VS Code Shortcut**: Press `Ctrl + Shift + B` to run build/launch tasks, or press `F5` with the Extension Pack for Java to debug `GymManagementServer`.
-
----
-
 ## API Overview
 
 | Group | Endpoints | Access |
@@ -144,9 +99,3 @@ Then open **http://localhost:8080** in your browser.
 | **Member Portal** | `GET /api/member/dashboard`, `GET /api/member/plans`, `GET /api/member/subscriptions`, `GET/POST/DELETE /api/member/upgrade-requests`, `GET /api/member/payments`, `GET /api/member/payments/receipt`, `POST /api/member/razorpay/order`, `POST /api/member/razorpay/verify`, `POST /api/member/razorpay/fail`, `GET/PUT /api/member/notifications`, `GET/PUT /api/member/profile`, `PUT /api/member/password` | `MEMBER` only (scoped to session) |
 
 ---
-
-## Hosting & Deployment Note
-
-Because Forge Gym Management System runs a **Java 21 backend server** connected to a **PostgreSQL database**, it **cannot be hosted on static-only services like GitHub Pages** (GitHub Pages only serves static HTML/CSS/JS files and cannot run Java or PostgreSQL).
-
-To publish a live URL accessible from any device, deploy the repository to a cloud platform that supports **Java / Docker + PostgreSQL** (such as **Render**, **Railway**, or **Fly.io**) using environment variables for database and Razorpay Test Mode credentials.
