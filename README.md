@@ -90,51 +90,6 @@ PostgreSQL database `gym_management` consists of 10 relational tables defined in
 
 ---
 
-## Getting Started (Local Setup on Windows)
-
-### Prerequisites
-- **Java JDK 21** (e.g., Eclipse Adoptium Temurin 21)
-- **PostgreSQL 14+ / 18+**
-- **PostgreSQL JDBC Driver** placed at `lib/postgresql-42.7.4.jar`
-
-### 1. Provision PostgreSQL Database
-Create the `gymmanager` role and `gym_management` database in PostgreSQL (via `psql` or pgAdmin), then initialize the schema:
-
-```powershell
-.\setup-database.bat
-```
-*(Or execute `database.sql` directly in pgAdmin / `psql`.)*
-
-### 2. Configure Database & Server Settings
-Copy `config.example.properties` to `config/app.properties` (excluded from Git):
-
-```properties
-db.url=jdbc:postgresql://localhost:5432/gym_management
-db.username=gymmanager
-db.password=gymmanager
-server.port=8080
-```
-
-### 3. Configure Razorpay Test Mode Keys *(Optional)*
-Only **Razorpay Test Mode** keys (`rzp_test_...`) are permitted. Set them as environment variables before launching the server (never place secrets in frontend JavaScript):
-
-```powershell
-$env:RAZORPAY_KEY_ID = "rzp_test_your_test_key_id"
-$env:RAZORPAY_KEY_SECRET = "your_test_key_secret"
-```
-*(All non-gateway features—members, plans, subscriptions, attendance, Cash/UPI/Card payments, reports, and notifications—work without Razorpay keys configured.)*
-
-### 4. Compile & Run
-From PowerShell or the VS Code integrated terminal:
-
-```powershell
-.\run.bat
-```
-Then open **http://localhost:8080** in your browser.
-- **VS Code Shortcut**: Press `Ctrl + Shift + B` to run build/launch tasks, or press `F5` with the Extension Pack for Java to debug `GymManagementServer`.
-
----
-
 ## API Overview
 
 | Group | Endpoints | Access |
