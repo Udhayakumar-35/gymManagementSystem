@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <title>Membership Management — Forge Gym</title>
+  <link rel="stylesheet" href="/member/css/member.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script src="/member/js/member-common.js" defer></script>
+  <script src="/member/js/member-membership.js" defer></script>
+</head>
+<body>
+  <div class="member-shell">
+    <aside class="m-sidebar" id="m-sidebar"></aside>
+    <div class="m-main">
+      <header class="m-topbar" id="m-topbar"></header>
+      <main class="m-content">
+        <div class="m-page-head">
+          <div>
+            <p class="m-eyebrow">PLANS &amp; SUBSCRIPTIONS</p>
+            <h1>Membership Management</h1>
+            <p class="m-sub">Compare club plans, renew online via Razorpay Test Mode, or request a tier upgrade.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-lime" id="open-renew-btn">↻ Renew Membership</button>
+            <button type="button" class="btn btn-ghost" id="open-upgrade-btn">⬆ Request Upgrade</button>
+          </div>
+        </div>
+
+        <!-- Current Membership Summary -->
+        <div id="current-membership-strip"></div>
+
+        <!-- Available Plans Grid -->
+        <div class="m-panel-head" style="margin-top:8px">
+          <div>
+            <h2>Available Membership Plans</h2>
+            <p>All active gym packages published by Forge Gym administration</p>
+          </div>
+        </div>
+        <div class="plans-grid" id="plans-grid">
+          <div class="m-card"><div class="loading-box"><span class="spinner"></span> Loading plans...</div></div>
+        </div>
+
+        <!-- Upgrade Requests Table -->
+        <section class="m-panel" id="upgrades">
+          <div class="m-panel-head">
+            <div>
+              <h2>Membership Upgrade Requests</h2>
+              <p>Track admin approval status and complete payment once approved</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="open-upgrade-btn-2">＋ New Upgrade Request</button>
+          </div>
+          <div class="table-wrap" id="upgrade-requests-table">
+            <div class="loading-box"><span class="spinner"></span> Loading upgrade requests...</div>
+          </div>
+        </section>
+
+        <!-- Subscription History -->
+        <section class="m-panel">
+          <div class="m-panel-head">
+            <div>
+              <h2>Subscription History</h2>
+              <p>All previous and current Forge Gym memberships</p>
+            </div>
+          </div>
+          <div class="table-wrap" id="subscriptions-table">
+            <div class="loading-box"><span class="spinner"></span> Loading subscription history...</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Renew Membership Modal -->
+  <dialog id="renew-dialog" class="m-dialog">
+    <form id="renew-form" class="m-dialog-inner" method="dialog">
+      <div class="m-dialog-head">
+        <div>
+          <p class="m-eyebrow">ONLINE RENEWAL · RAZORPAY TEST MODE</p>
+          <h2>Renew Membership</h2>
+        </div>
+        <button type="button" class="m-dialog-close" data-close-dialog="renew-dialog">×</button>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label for="renew-plan-select">Select Renewal Plan</label>
+        <select id="renew-plan-select" name="plan_id" required></select>
+      </div>
+      <div class="info-kv" id="renew-summary" style="margin-bottom:14px">
+        <div><small>Duration</small><b id="renew-duration">—</b></div>
+        <div><small>Total Payable Amount</small><b id="renew-amount" style="color:var(--lime);font-size:17px">—</b></div>
+      </div>
+      <p style="font-size:11px;color:var(--text-soft);margin:0 0 8px">
+        Payment is processed securely in <b>Razorpay Test Mode</b>. Your membership extends automatically only after server-side signature and capture verification.
+      </p>
+      <div class="m-dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close-dialog="renew-dialog">Cancel</button>
+        <button type="submit" class="btn btn-lime" id="renew-submit-btn">Proceed to Razorpay →</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Upgrade Request Modal -->
+  <dialog id="upgrade-dialog" class="m-dialog">
+    <form id="upgrade-form" class="m-dialog-inner" method="dialog">
+      <div class="m-dialog-head">
+        <div>
+          <p class="m-eyebrow">PLAN UPGRADE WORKFLOW</p>
+          <h2>Request Membership Upgrade</h2>
+        </div>
+        <button type="button" class="m-dialog-close" data-close-dialog="upgrade-dialog">×</button>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label for="upgrade-plan-select">Target Plan</label>
+        <select id="upgrade-plan-select" name="requested_plan_id" required></select>
+      </div>
+      <div class="info-kv" style="margin-bottom:14px">
+        <div><small>Current Plan</small><b id="upg-current-plan">—</b></div>
+        <div><small>Estimated Payable Upon Approval</small><b id="upg-payable" style="color:var(--lime)">—</b></div>
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label for="upgrade-reason">Reason / Notes (Optional)</label>
+        <textarea id="upgrade-reason" name="reason" placeholder="E.g. Upgrading from Monthly to Quarterly for group classes..."></textarea>
+      </div>
+      <p style="font-size:11px;color:var(--text-soft);margin:0">
+        Your request will be reviewed by an Admin. Once approved, you will receive a notification to complete payment via Razorpay.
+      </p>
+      <div class="m-dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close-dialog="upgrade-dialog">Cancel</button>
+        <button type="submit" class="btn btn-lime" id="upgrade-submit-btn">Submit Upgrade Request</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

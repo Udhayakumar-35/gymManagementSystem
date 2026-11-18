@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <title>Payments &amp; Receipts — Forge Gym</title>
+  <link rel="stylesheet" href="/member/css/member.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script src="/member/js/member-common.js" defer></script>
+  <script src="/member/js/member-payments.js" defer></script>
+</head>
+<body>
+  <div class="member-shell">
+    <aside class="m-sidebar" id="m-sidebar"></aside>
+    <div class="m-main">
+      <header class="m-topbar" id="m-topbar"></header>
+      <main class="m-content">
+        <div class="m-page-head">
+          <div>
+            <p class="m-eyebrow">BILLING &amp; ONLINE RENEWAL</p>
+            <h1>Payments &amp; Receipts</h1>
+            <p class="m-sub">View transaction history, pay pending dues in Razorpay Test Mode, and download receipts.</p>
+          </div>
+          <a class="btn btn-lime" href="/member/membership.html?action=renew">↻ Renew Membership Online</a>
+        </div>
+
+        <!-- Pending Payments Alert Section -->
+        <section id="pending-payments-section" class="hidden"></section>
+
+        <!-- Payment Summary Cards -->
+        <div class="cards-grid cards-grid-3" id="payment-summary-cards">
+          <div class="m-card"><div class="loading-box"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <!-- Transaction History Table -->
+        <section class="m-panel">
+          <div class="m-panel-head">
+            <div>
+              <h2>Transaction History</h2>
+              <p>All payments associated with your Forge Gym membership</p>
+            </div>
+            <div class="filter-pills" id="status-filters">
+              <button type="button" class="pill active" data-filter="ALL">All Transactions</button>
+              <button type="button" class="pill" data-filter="PAID">Successful</button>
+              <button type="button" class="pill" data-filter="PENDING">Pending</button>
+              <button type="button" class="pill" data-filter="FAILED">Failed</button>
+            </div>
+          </div>
+          <div class="table-wrap" id="payments-table-wrap">
+            <div class="loading-box"><span class="spinner"></span> Loading transactions...</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

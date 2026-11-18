@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <title>Forge — Gym Management</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script src="/js/app.js" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <section id="auth-screen" class="auth-screen">
+    <div class="auth-art">
+      <div class="brand-mark">F</div>
+      <p class="eyebrow">FORGE FITNESS CLUB</p>
+      <h1>Build strength.<br><span>Track progress.</span></h1>
+      <p class="auth-copy">One platform with dedicated portals for gym administrators and club members — manage memberships, renewals, check-ins, and payments effortlessly.</p>
+      <div class="auth-lines"><span>ADMIN PORTAL</span><span>MEMBER PORTAL</span><span>EST. 2024</span></div>
+    </div>
+    <div class="auth-panel">
+      <form id="auth-form" class="auth-card">
+        <div class="brand-mark small">F</div>
+        <div class="auth-tabs" id="auth-tabs">
+          <button type="button" class="auth-tab active" data-auth-mode="login">Sign in</button>
+          <button type="button" class="auth-tab" data-auth-mode="member_signup">Member Sign up</button>
+          <button type="button" class="auth-tab" data-auth-mode="signup">Admin Sign up</button>
+        </div>
+        <p class="eyebrow" id="auth-eyebrow">FORGE PORTAL</p>
+        <h2 id="auth-title">Welcome back</h2>
+        <p id="auth-description" class="muted">Sign in with your Admin or Member account.</p>
+
+        <div id="member-signup-fields" class="member-signup-grid hidden">
+          <label class="wide">Full name<input name="full_name" type="text" placeholder="Your full name"></label>
+          <label>Age<input name="age" type="number" min="10" max="100" placeholder="25"></label>
+          <label>Gender
+            <select name="gender">
+              <option value="">Choose…</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </label>
+          <label>Phone number<input name="phone" type="tel" placeholder="9876543210"></label>
+          <label>Email address<input name="email" type="email" placeholder="you@example.com"></label>
+          <label class="wide">Emergency contact<input name="emergency_contact" type="tel" placeholder="Emergency phone"></label>
+          <label class="wide">Address<textarea name="address" placeholder="Street, city"></textarea></label>
+        </div>
+
+        <label><span id="username-label">Username (or Member Email / Phone)</span><input name="username" required autocomplete="username" minlength="3"></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password" minlength="6"></label>
+        <button class="button primary full" type="submit" id="auth-submit">Sign in <span>→</span></button>
+        <p class="auth-foot" id="auth-foot">Admins open the Admin Portal; Members are routed directly to the Member Portal.</p>
+      </form>
+    </div>
+  </section>
+  <div id="app" class="app-shell hidden">
+    <aside class="sidebar"><a class="brand" href="#dashboard"><span class="brand-mark small">F</span><span>FORGE<small>ADMIN PORTAL</small></span></a><div class="nav-caption">WORKSPACE</div><nav id="navigation"><button class="nav-link active" data-page="dashboard"><span>◫</span> Overview</button><button class="nav-link" data-page="members"><span>♙</span> Members</button><button class="nav-link" data-page="memberships"><span>◇</span> Memberships</button><button class="nav-link" data-page="upgrades"><span>⬆</span> Upgrade Requests <b class="nav-pill hidden" id="upgrades-badge">0</b></button><button class="nav-link" data-page="plans"><span>▤</span> Plans</button><button class="nav-link" data-page="payments"><span>₹</span> Payments</button><button class="nav-link" data-page="attendance"><span>◷</span> Attendance</button><button class="nav-link" data-page="reports"><span>▥</span> Reports</button></nav><div class="sidebar-bottom"><div class="system-status"><i></i><span><b>System online</b><small>Admin workspace</small></span></div><button id="logout" class="logout"><span>↪</span> Sign out</button></div></aside>
+    <main class="main-area"><header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Toggle menu">☰</button><div class="breadcrumb">Workspace <span>/</span> <b id="crumb">Overview</b></div><div class="top-actions"><button class="action-button" data-open="announcement">📢 Send announcement</button><span class="date-label" id="today-label"></span><div class="avatar" id="admin-avatar">A</div></div></header>
+      <div class="content"><section class="page active" id="page-dashboard"><div class="page-heading"><div><p class="eyebrow">YOUR GYM AT A GLANCE</p><h1>Good to see you.</h1><p class="muted">Here’s what’s happening at your club today.</p></div><button class="button primary" data-open="member">＋ Add member</button></div><div class="stats-grid"><article class="stat-card"><div class="stat-top"><span class="stat-icon indigo">♙</span><span class="stat-tag">ALL TIME</span></div><p>Total members</p><strong id="stat-members">—</strong><small>Registered in your club</small></article><article class="stat-card"><div class="stat-top"><span class="stat-icon green">◇</span><span class="stat-tag positive">● LIVE</span></div><p>Active memberships</p><strong id="stat-active">—</strong><small>Currently in good standing</small></article><article class="stat-card"><div class="stat-top"><span class="stat-icon amber">◷</span><span class="stat-tag">NEEDS ATTENTION</span></div><p>Expired memberships</p><strong id="stat-expired">—</strong><small>May be ready for renewal</small></article><article class="stat-card"><div class="stat-top"><span class="stat-icon blue">₹</span><span class="stat-tag">ALL TIME</span></div><p>Total revenue</p><strong id="stat-revenue">—</strong><small>From successful payments</small></article></div><div class="dashboard-grid"><article class="panel"><div class="panel-heading"><div><h2>Recent members</h2><p>Latest people to join your club</p></div><button class="text-button" data-nav="members">View all →</button></div><div id="recent-members" class="table-wrap"></div></article><article class="panel attendance-callout"><span class="stat-icon green">◷</span><p class="eyebrow">TODAY'S CHECK-INS</p><strong id="stat-attendance">—</strong><p class="muted">members have checked in today.</p><button class="button secondary" data-nav="attendance">Open attendance</button></article></div><article class="panel"><div class="panel-heading"><div><h2>Recent payments</h2><p>Latest recorded transactions</p></div><button class="text-button" data-nav="payments">View payments →</button></div><div id="recent-payments" class="table-wrap"></div></article></section>
+      <section class="page" id="page-members"><div class="page-heading"><div><p class="eyebrow">PEOPLE</p><h1>Members</h1><p class="muted">Keep your member directory up to date.</p></div><button class="button primary" data-open="member">＋ Add member</button></div><article class="panel"><div class="toolbar"><div class="searchbox"><span>⌕</span><input id="members-search" placeholder="Search by name, ID or phone…"></div><span class="result-count" id="members-count"></span></div><div id="members-table" class="table-wrap"></div></article></section>
+      <section class="page" id="page-plans"><div class="page-heading"><div><p class="eyebrow">PRICING</p><h1>Membership plans</h1><p class="muted">Manage the packages available to your members.</p></div><button class="button primary" data-open="plan">＋ New plan</button></div><div id="plans-list" class="plans-grid"></div></section>
+      <section class="page" id="page-memberships"><div class="page-heading"><div><p class="eyebrow">SUBSCRIPTIONS</p><h1>Memberships</h1><p class="muted">Track active, upcoming and expired member plans.</p></div><button class="button primary" data-open="membership">＋ Assign plan</button></div><article class="panel"><div id="memberships-table" class="table-wrap"></div></article></section>
+      <section class="page" id="page-upgrades"><div class="page-heading"><div><p class="eyebrow">MEMBER PORTAL REQUESTS</p><h1>Membership Upgrade Requests</h1><p class="muted">Review, approve, or reject member tier upgrades. Approved upgrades unlock Razorpay payment in the Member Portal.</p></div><button class="button primary" data-open="announcement">📢 Broadcast announcement</button></div><article class="panel"><div class="toolbar"><label class="filter-label">Status<select id="upgrades-filter"><option value="ALL">All requests</option><option value="PENDING">Pending review</option><option value="APPROVED">Approved (Awaiting payment)</option><option value="COMPLETED">Completed</option><option value="REJECTED">Rejected</option></select></label></div><div id="upgrades-table" class="table-wrap"></div></article></section>
+      <section class="page" id="page-payments"><div class="page-heading"><div><p class="eyebrow">TRANSACTIONS</p><h1>Payments</h1><p class="muted">Record payments and review your transaction history.</p></div><button class="button primary" data-open="payment">＋ Record payment</button></div><article class="panel"><div class="toolbar"><div class="searchbox"><span>⌕</span><input id="payments-search" placeholder="Search member or ID…"></div><label class="filter-label">From<input type="date" id="payment-from"></label><label class="filter-label">To<input type="date" id="payment-to"></label></div><div id="payments-table" class="table-wrap"></div></article></section>
+      <section class="page" id="page-attendance"><div class="page-heading"><div><p class="eyebrow">DAILY ACTIVITY</p><h1>Attendance</h1><p class="muted">Check members in and browse daily visit history.</p></div><button class="button primary" data-open="checkin">＋ Check in member</button></div><article class="panel"><div class="toolbar"><div class="searchbox"><span>⌕</span><input id="attendance-search" placeholder="Search member or ID…"></div><label class="filter-label">Date<input type="date" id="attendance-date"></label></div><div id="attendance-table" class="table-wrap"></div></article></section>
+      <section class="page" id="page-reports"><div class="page-heading"><div><p class="eyebrow">INSIGHTS</p><h1>Reports</h1><p class="muted">A monthly snapshot of club performance.</p></div><label class="filter-label">Payment month<input id="report-month" type="month"></label></div><div id="report-summary" class="stats-grid report-stats"></div><article class="panel"><div class="panel-heading"><div><h2>Monthly revenue</h2><p>Successful payments over the recent months</p></div></div><div id="revenue-chart" class="chart"></div></article><article class="panel"><div class="panel-heading"><div><h2>Daily attendance</h2><p>Member visits over the last 30 days</p></div></div><div id="attendance-report-table" class="table-wrap"></div></article><article class="panel"><div class="panel-heading"><div><h2>Renewals to review</h2><p>Expired plans and memberships ending soon</p></div></div><div id="renewals-table" class="table-wrap"></div></article><article class="panel"><div class="panel-heading"><div><h2>Payments for selected month</h2><p id="report-month-label"></p></div></div><div id="report-payments" class="table-wrap"></div></article></section></div>
+    </main>
+  </div>
+  <dialog id="form-dialog" class="form-dialog"><form id="data-form" method="dialog"><div class="dialog-heading"><div><p class="eyebrow" id="dialog-eyebrow">WORKSPACE</p><h2 id="dialog-title">Add item</h2></div><button type="button" class="icon-button" id="dialog-close" aria-label="Close">×</button></div><div id="form-fields" class="form-fields"></div><p id="form-error" class="form-error"></p><div class="dialog-actions"><button type="button" class="button secondary" id="cancel-form">Cancel</button><button type="submit" class="button primary" id="save-form">Save changes</button></div></form></dialog>
+</body>
+</html>

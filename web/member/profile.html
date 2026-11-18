@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <title>My Profile — Forge Gym</title>
+  <link rel="stylesheet" href="/member/css/member.css">
+  <script src="/member/js/member-common.js" defer></script>
+  <script src="/member/js/member-profile.js" defer></script>
+</head>
+<body>
+  <div class="member-shell">
+    <aside class="m-sidebar" id="m-sidebar"></aside>
+    <div class="m-main">
+      <header class="m-topbar" id="m-topbar"></header>
+      <main class="m-content">
+        <div class="m-page-head">
+          <div>
+            <p class="m-eyebrow">ACCOUNT &amp; SECURITY</p>
+            <h1>My Profile</h1>
+            <p class="m-sub">Manage your personal contact information, review your membership, and update your password.</p>
+          </div>
+        </div>
+
+        <div class="cards-grid cards-grid-2">
+          <!-- Personal Details Edit Form -->
+          <section class="m-panel">
+            <div class="m-panel-head">
+              <div>
+                <h2>Personal Information</h2>
+                <p>Update your permitted contact and profile details</p>
+              </div>
+            </div>
+            <form id="profile-form" class="form-grid">
+              <div class="field wide">
+                <label for="pf-name">Full Name</label>
+                <input id="pf-name" name="full_name" type="text" required>
+              </div>
+              <div class="field">
+                <label for="pf-age">Age</label>
+                <input id="pf-age" name="age" type="number" min="10" max="100" required>
+              </div>
+              <div class="field">
+                <label for="pf-gender">Gender</label>
+                <select id="pf-gender" name="gender" required>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pf-phone">Registered Phone</label>
+                <input id="pf-phone" name="phone" type="tel" required>
+              </div>
+              <div class="field">
+                <label for="pf-email">Registered Email</label>
+                <input id="pf-email" name="email" type="email">
+              </div>
+              <div class="field wide">
+                <label for="pf-emergency">Emergency Contact</label>
+                <input id="pf-emergency" name="emergency_contact" type="tel" required>
+              </div>
+              <div class="field wide">
+                <label for="pf-address">Address</label>
+                <textarea id="pf-address" name="address" required></textarea>
+              </div>
+              <div class="wide" style="display:flex;justify-content:flex-end;margin-top:6px">
+                <button type="submit" class="btn btn-lime" id="save-profile-btn">Save Profile Changes</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Read-only Membership & Account + Change Password -->
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <section class="m-panel" style="margin-bottom:0">
+              <div class="m-panel-head">
+                <div>
+                  <h2>Account &amp; Membership Details</h2>
+                  <p>Managed by Forge Gym — read-only</p>
+                </div>
+                <span class="badge active">MEMBER</span>
+              </div>
+              <div class="info-kv" id="readonly-account-info">
+                <div class="loading-box"><span class="spinner"></span> Loading...</div>
+              </div>
+            </section>
+
+            <section class="m-panel" style="margin-bottom:0">
+              <div class="m-panel-head">
+                <div>
+                  <h2>Change Password</h2>
+                  <p>Keep your Member Portal account secure (minimum 6 characters)</p>
+                </div>
+              </div>
+              <form id="password-form" class="form-grid">
+                <div class="field wide">
+                  <label for="pw-current">Current Password</label>
+                  <input id="pw-current" name="current_password" type="password" required autocomplete="current-password">
+                </div>
+                <div class="field">
+                  <label for="pw-new">New Password</label>
+                  <input id="pw-new" name="new_password" type="password" required minlength="6" autocomplete="new-password">
+                </div>
+                <div class="field">
+                  <label for="pw-confirm">Confirm New Password</label>
+                  <input id="pw-confirm" name="confirm_password" type="password" required minlength="6" autocomplete="new-password">
+                </div>
+                <div class="wide" style="display:flex;justify-content:flex-end;margin-top:6px">
+                  <button type="submit" class="btn btn-ghost" id="save-pw-btn">Update Password</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

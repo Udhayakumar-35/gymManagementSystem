@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <title>Member Dashboard — Forge Gym</title>
+  <link rel="stylesheet" href="/member/css/member.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script src="/member/js/member-common.js" defer></script>
+  <script src="/member/js/member-dashboard.js" defer></script>
+</head>
+<body>
+  <div class="member-shell">
+    <aside class="m-sidebar" id="m-sidebar"></aside>
+    <div class="m-main">
+      <header class="m-topbar" id="m-topbar"></header>
+      <main class="m-content">
+        <div class="m-page-head">
+          <div>
+            <p class="m-eyebrow">PERSONAL FITNESS HUB</p>
+            <h1 id="welcome-heading">Welcome back.</h1>
+            <p class="m-sub" id="welcome-sub">Here is your live membership, attendance, and payment overview.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-lime" href="/member/membership.html?action=renew">↻ Renew Membership</a>
+            <a class="btn btn-ghost" href="/member/membership.html">View Plans</a>
+          </div>
+        </div>
+
+        <!-- Dynamic Renewal Reminder Banner -->
+        <div id="renewal-banner"></div>
+
+        <!-- Active Upgrade Request Status Banner -->
+        <div id="upgrade-banner"></div>
+
+        <!-- Quick Actions Bar -->
+        <div class="quick-actions">
+          <a class="btn btn-ghost" href="/member/membership.html">◇ View Membership Plans</a>
+          <a class="btn btn-ghost" href="/member/membership.html?action=renew">↻ Renew Membership</a>
+          <a class="btn btn-ghost" href="/member/payments.html">₹ View Payment History</a>
+          <a class="btn btn-ghost" href="/member/profile.html">♙ View Profile</a>
+        </div>
+
+        <!-- Top Stat Cards -->
+        <div class="cards-grid" id="dashboard-stats">
+          <div class="m-card"><div class="loading-box"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <!-- Membership Overview & Attendance Overview -->
+        <div class="cards-grid cards-grid-2">
+          <section class="m-panel">
+            <div class="m-panel-head">
+              <div>
+                <h2>Membership Overview</h2>
+                <p>Current plan validity, remaining days, and renewal status</p>
+              </div>
+              <a class="btn-link" href="/member/membership.html">Manage →</a>
+            </div>
+            <div id="membership-overview">
+              <div class="loading-box"><span class="spinner"></span> Loading membership...</div>
+            </div>
+          </section>
+
+          <section class="m-panel">
+            <div class="m-panel-head">
+              <div>
+                <h2>Attendance Overview</h2>
+                <p>Your gym check-ins over recent months</p>
+              </div>
+              <span id="last-checkin-pill" class="badge"></span>
+            </div>
+            <div id="attendance-overview">
+              <div class="loading-box"><span class="spinner"></span> Loading attendance...</div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Payment Overview -->
+        <section class="m-panel">
+          <div class="m-panel-head">
+            <div>
+              <h2>Payment Overview</h2>
+              <p>Latest payment record and any pending fees</p>
+            </div>
+            <a class="btn-link" href="/member/payments.html">Full payment history →</a>
+          </div>
+          <div id="payment-overview">
+            <div class="loading-box"><span class="spinner"></span> Loading payments...</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
