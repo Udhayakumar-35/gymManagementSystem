@@ -99,9 +99,3 @@ PostgreSQL database `gym_management` consists of 10 relational tables defined in
 | **Member Portal** | `GET /api/member/dashboard`, `GET /api/member/plans`, `GET /api/member/subscriptions`, `GET/POST/DELETE /api/member/upgrade-requests`, `GET /api/member/payments`, `GET /api/member/payments/receipt`, `POST /api/member/razorpay/order`, `POST /api/member/razorpay/verify`, `POST /api/member/razorpay/fail`, `GET/PUT /api/member/notifications`, `GET/PUT /api/member/profile`, `PUT /api/member/password` | `MEMBER` only (scoped to session) |
 
 ---
-
-## Hosting & Deployment Note
-
-Because Forge Gym Management System runs a **Java 21 backend server** connected to a **PostgreSQL database**, it **cannot be hosted on static-only services like GitHub Pages** (GitHub Pages only serves static HTML/CSS/JS files and cannot run Java or PostgreSQL).
-
-To publish a live URL accessible from any device, deploy the repository to a cloud platform that supports **Java / Docker + PostgreSQL** (such as **Render**, **Railway**, or **Fly.io**) using environment variables for database and Razorpay Test Mode credentials.
