@@ -7,6 +7,18 @@ A full-stack, zero-framework gym management platform built with **Java 21**, **P
 
 ---
 
+## Live Deployment & Cloud Architecture
+
+- **Live Application URL**: [https://forge-gym-rode.onrender.com](https://forge-gym-rode.onrender.com)
+
+The Forge Gym Management System is deployed and actively running in production on **Render** as a containerized Java 21 web service.
+Persistent relational data storage is powered by a cloud-hosted **Supabase PostgreSQL** instance, providing high availability, secure connection pooling, and continuous data durability.
+The production runtime leverages containerized environment variables (`DATABASE_URL`, `PORT`) to dynamically configure database connectivity and port binding without manual intervention.
+Users and gym administrators can access the full feature suite directly from any web browser or mobile device with zero client-side installation.
+All business workflows—such as member registrations, attendance check-ins, tier upgrades, and Razorpay Test Mode transactions—execute securely against the live Supabase cloud database with sub-second response times.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Notes |
